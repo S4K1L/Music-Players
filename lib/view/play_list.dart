@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:music_player/api/api_services.dart';
 import 'package:music_player/controller/spotify_controller.dart';
 import 'package:music_player/utils/constant/colors.dart';
 
@@ -67,7 +68,7 @@ class RecommendedPage extends StatelessWidget {
                   final playlist = spotifyController.tracks[index];
                   return GestureDetector(
                     onTap: () {
-                      spotifyController.fetchTracks(playlist['id']);
+                      spotifyController.fetchTracks(playlistId);
                       Get.snackbar('Selected', 'Playlist: ${playlist['name']}');
                     },
                     child: Padding(

@@ -47,7 +47,7 @@ class SignupPage extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              SizedBox(height: 50 * 4.sp),
+              SizedBox(height: 50 * 3.sp),
               Text(
                 "Register here",
                 style: TextStyle(
@@ -132,60 +132,63 @@ class SignupPage extends StatelessWidget {
                 ),
               ),
               SizedBox(height: 20.sp),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 60.sp),
-                child: Column(
-                  children: [
-                    GestureDetector(
-                      onTap:(){
-                        Get.to(() => ResetPassword(),
-                            transition: Transition.rightToLeft);
-                      },
+              Column(
+                children: [
+                  GestureDetector(
+                    onTap:(){
+                      Get.to(() => ResetPassword(),
+                          transition: Transition.rightToLeft);
+                    },
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Spacer(),
+                        Text(
+                          "Don’t remember the password? ",
+                          style: TextStyle(color: Colors.white, fontSize: 14.sp),
+                        ),
+                        Text(
+                          "Recover here",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                              fontSize: 14.sp
+                          ),
+                        ),
+                        Spacer(),
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 10.sp),
+                  GestureDetector(
+                    onTap: () {
+                      Get.to(() => LoginPage(),
+                          transition: Transition.rightToLeft);
+                    },
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 20.sp),
                       child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
+                          Spacer(),
                           Text(
-                            "Don’t remember the password? ",
+                            "Already have an account? ",
                             style: TextStyle(color: Colors.white, fontSize: 12.sp),
                           ),
                           const Text(
-                            "Recover here",
+                            "Login here",
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+                          Spacer(),
                         ],
                       ),
                     ),
-                    SizedBox(height: 10.sp),
-                    GestureDetector(
-                      onTap: () {
-                        Get.to(() => LoginPage(),
-                            transition: Transition.rightToLeft);
-                      },
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 20.sp),
-                        child: Row(
-                          children: [
-                            Text(
-                              "Already have an account? ",
-                              style: TextStyle(color: Colors.white, fontSize: 12.sp),
-                            ),
-                            const Text(
-                              "Login here",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+              SizedBox(height: 30.sp),
             ],
           ),
         ),

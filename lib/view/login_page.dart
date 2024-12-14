@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:music_player/controller/login_controller.dart';
 import 'package:music_player/utils/constant/colors.dart';
@@ -96,59 +97,62 @@ class LoginPage extends StatelessWidget {
               ),
               const SizedBox(height: 20),
               // Forgot password and sign-up links
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 60),
-                child: Column(
-                  children: [
-                    GestureDetector(
-                      onTap:(){
-                        Get.to(() => ResetPassword(),
-                            transition: Transition.rightToLeft);
-                      },
-                      child: const Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  GestureDetector(
+                    onTap:(){
+                      Get.to(() => ResetPassword(),
+                          transition: Transition.rightToLeft);
+                    },
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Spacer(),
+                        Text(
+                          "Don’t remember the password? ",
+                          style: TextStyle(color: Colors.white,fontSize: 14.sp),
+                        ),
+                        Text(
+                          "Recover here",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14.sp
+                          ),
+                        ),
+                        Spacer(),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  GestureDetector(
+                    onTap: (){
+                      Get.to(() => SignupPage(),
+                          transition: Transition.rightToLeft);
+                    },
+                    child: const Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 25),
+                      child: Row(
                         children: [
+                          Spacer(),
                           Text(
-                            "Don’t remember the password? ",
+                            "Don't have an account? ",
                             style: TextStyle(color: Colors.white),
                           ),
                           Text(
-                            "Recover here",
+                            "Signup here",
                             style: TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
+                          Spacer(),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    GestureDetector(
-                      onTap: (){
-                        Get.to(() => SignupPage(),
-                            transition: Transition.rightToLeft);
-                      },
-                      child: const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 25),
-                        child: Row(
-                          children: [
-                            Text(
-                              "Don't have an account? ",
-                              style: TextStyle(color: Colors.white),
-                            ),
-                            Text(
-                              "Signup here",
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ],
           ),

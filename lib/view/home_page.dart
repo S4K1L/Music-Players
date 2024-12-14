@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:music_player/api/api_services.dart';
 import 'package:music_player/controller/spotify_controller.dart';
 import 'package:music_player/utils/constant/colors.dart';
 
@@ -23,7 +24,7 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    spotifyController.fetchTracks('your_playlist_id');
+    spotifyController.fetchTracks(playlistId);
     return Scaffold(
       backgroundColor: kBackGroundColor,
       body: SingleChildScrollView(
