@@ -44,6 +44,29 @@ class ProfileController extends GetxController{
     }
   }
 
+  // Function to change username
+  Future<void> changeUsername(String newUsername) async {
+    try {
+      // Get current user
+      User? user = _auth.currentUser;
+      if (user == null) {
+        Get.snackbar("Error", "User not logged in");
+        return;
+      }
+
+      // Update username in Firestore
+      await _firestore.collection('users').doc(user.uid).update({
+        'name': newUsername,
+      });
+
+      // Provide feedback to the user
+      Get.snackbar("Success", "Username updated successfully");
+    } catch (e) {
+      // Handle errors
+      Get.snackbar("Error", "Failed to update username: ${e.toString()}");
+    }
+  }
+
 
   /// Logout method
   Future<void> logout() async {
@@ -80,6 +103,55 @@ class ProfileController extends GetxController{
       }
       Get.snackbar('Error', 'An error occurred while logging out. Please try again.');
       rethrow;
+    }
+  }
+
+  /// Delete the user's account and associated data from Firestore.
+  Future<void> deleteAccount() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        Get.snackbar('Error', 'No user is logged in.');
+        return;
+      }
+
+      String uid = user.uid; // Get the logged-in user's UID
+
+      // Delete user-related data across Firestore collections
+      WriteBatch batch = _firestore.batch();
+
+      // Example collections to delete
+      final List<String> collectionsToDelete = ['users', 'carbon'];
+
+      for (String collection in collectionsToDelete) {
+        QuerySnapshot querySnapshot = await _firestore
+            .collection(collection)
+            .where('userId', isEqualTo: uid)
+            .get();
+
+        for (var doc in querySnapshot.docs) {
+          batch.delete(doc.reference);
+        }
+      }
+
+      // Commit the batched deletion
+      await batch.commit();
+
+      // Delete the user's Firebase Authentication account
+      await user.delete();
+
+      // Navigate to the login screen after deletion
+      Get.offAll(()=> LoginPage(),transition: Transition.rightToLeft);
+      Get.snackbar('Success', 'Account and all related data deleted successfully.');
+    } catch (error) {
+      if (error.toString().contains('requires-recent-login')) {
+        Get.snackbar(
+          'Error',
+          'Please log in again to delete your account due to security reasons.',
+        );
+      } else {
+        Get.snackbar('Error', 'Failed to delete account: $error');
+      }
     }
   }
 
