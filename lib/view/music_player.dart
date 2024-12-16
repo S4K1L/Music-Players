@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:music_player/controller/spotify_controller.dart';
 import 'package:music_player/utils/constant/colors.dart';
-import 'package:music_player/utils/constant/constant.dart';
 
 class MusicPlayerPage extends StatelessWidget {
   MusicPlayerPage({super.key});
@@ -14,22 +13,19 @@ class MusicPlayerPage extends StatelessWidget {
       backgroundColor: kBackGroundColor,
       body: Obx(
             () => spotifyController.isLoading.value
-            ? Center(
-          child: CircularProgressIndicator(),
-        )
+            ? const Center(child: CircularProgressIndicator())
             : Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             // Album Art
             Container(
-              margin: EdgeInsets.symmetric(horizontal: 40),
+              margin: const EdgeInsets.symmetric(horizontal: 40),
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(16),
                 child: Image.network(
-                  spotifyController.tracks.isNotEmpty
-                      ? spotifyController.tracks[
-                  spotifyController.currentTrackIndex.value]['track']['album']['images'][0]['url']
-                      : logo,
+                  spotifyController.currentTrackAlbumImageUrl.isNotEmpty
+                      ? spotifyController.currentTrackAlbumImageUrl
+                      : 'https://via.placeholder.com/300', // Fallback image
                   fit: BoxFit.cover,
                 ),
               ),
@@ -41,23 +37,23 @@ class MusicPlayerPage extends StatelessWidget {
               children: [
                 Text(
                   spotifyController.currentTrackName,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.white,
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
                   spotifyController.currentTrackArtist,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: Colors.grey,
                     fontSize: 16,
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 30),
+            const SizedBox(height: 30),
 
             // Progress Bar
             Column(
@@ -69,7 +65,8 @@ class MusicPlayerPage extends StatelessWidget {
                   activeColor: Colors.white,
                   inactiveColor: Colors.grey,
                   onChanged: (value) {
-                    spotifyController.audioPlayer.seek(Duration(seconds: value.toInt()));
+                    spotifyController.currentTrackProgress.value = value;
+                    // Add logic to seek the audio
                   },
                 ),
                 Padding(
@@ -79,32 +76,30 @@ class MusicPlayerPage extends StatelessWidget {
                     children: [
                       Text(
                         formatDuration(Duration(seconds: spotifyController.currentTrackProgress.value.toInt())),
-                        style: TextStyle(color: Colors.grey, fontSize: 14),
+                        style: const TextStyle(color: Colors.grey, fontSize: 14),
                       ),
                       Text(
                         formatDuration(Duration(seconds: spotifyController.currentTrackDuration.value.toInt())),
-                        style: TextStyle(color: Colors.grey, fontSize: 14),
+                        style: const TextStyle(color: Colors.grey, fontSize: 14),
                       ),
                     ],
                   ),
                 ),
               ],
             ),
-            SizedBox(height: 30),
+            const SizedBox(height: 30),
 
             // Playback Controls
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 IconButton(
-                  icon: Icon(Icons.skip_previous),
+                  icon: const Icon(Icons.skip_previous),
                   color: Colors.white,
                   iconSize: 48,
-                  onPressed: () {
-                    spotifyController.previousTrack();
-                  },
+                  onPressed: spotifyController.previousTrack,
                 ),
-                SizedBox(width: 20),
+                const SizedBox(width: 20),
                 CircleAvatar(
                   radius: 35,
                   backgroundColor: Colors.white,
@@ -114,19 +109,15 @@ class MusicPlayerPage extends StatelessWidget {
                     ),
                     color: Colors.black,
                     iconSize: 48,
-                    onPressed: () {
-                      spotifyController.togglePlayback();
-                    },
+                    onPressed: spotifyController.togglePlayback,
                   ),
                 ),
-                SizedBox(width: 20),
+                const SizedBox(width: 20),
                 IconButton(
-                  icon: Icon(Icons.skip_next),
+                  icon: const Icon(Icons.skip_next),
                   color: Colors.white,
                   iconSize: 48,
-                  onPressed: () {
-                    spotifyController.nextTrack();
-                  },
+                  onPressed: spotifyController.nextTrack,
                 ),
               ],
             ),

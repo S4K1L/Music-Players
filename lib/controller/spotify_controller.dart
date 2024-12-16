@@ -9,17 +9,25 @@ class SpotifyController extends GetxController {
 
   var isLoading = false.obs;
   var currentTrackIndex = 0.obs;
-  var tracks = [].obs;
+  var currentTrack = Rxn<Map<String, dynamic>>(); // Nullable Map
+  var tracks = <Map<String, dynamic>>[].obs;
   var isPlaying = false.obs;
   var currentTrackProgress = 0.0.obs;
   var currentTrackDuration = 0.0.obs;
 
-  String get currentTrackName => tracks.isNotEmpty
-      ? tracks[currentTrackIndex.value]['track']['name']
-      : 'Unknown';
-  String get currentTrackArtist => tracks.isNotEmpty
-      ? tracks[currentTrackIndex.value]['track']['artists'][0]['name']
-      : 'Unknown';
+  String get currentTrackName => currentTrack.value?['name'] ?? 'Unknown';
+
+  String get currentTrackArtist {
+    final artists = currentTrack.value?['artists'] as List?;
+    return (artists != null && artists.isNotEmpty)
+        ? artists[0]['name'] ?? 'Unknown Artist'
+        : 'Unknown Artist';
+  }
+
+  String get currentTrackAlbumImageUrl {
+    final images = currentTrack.value?['album']?['images'] ?? [];
+    return images.isNotEmpty ? images[0]['url'] ?? '' : '';
+  }
 
   @override
   void onInit() {
@@ -39,14 +47,12 @@ class SpotifyController extends GetxController {
     });
 
     audioPlayer.durationStream.listen((duration) {
-      if (duration != null) {
-        currentTrackDuration.value = duration.inSeconds.toDouble();
-      }
+      currentTrackDuration.value = duration?.inSeconds.toDouble() ?? 0.0;
     });
 
     audioPlayer.playerStateStream.listen((playerState) {
       if (playerState.processingState == ProcessingState.completed) {
-        stopPlayback();
+        nextTrack();
       }
     });
   }
@@ -74,7 +80,7 @@ class SpotifyController extends GetxController {
     }
   }
 
-  Future<void> fetchTracks(String playlistId) async {
+  Future<void> fetchTracks() async {
     try {
       isLoading(true);
       final token = await getAccessToken();
@@ -86,7 +92,14 @@ class SpotifyController extends GetxController {
       );
 
       if (response.statusCode == 200) {
-        tracks.value = jsonDecode(response.body)['items'];
+        final responseData = jsonDecode(response.body);
+        tracks.value = (responseData['items'] as List)
+            .map((item) => item['track'] as Map<String, dynamic>)
+            .where((track) =>
+        track != null &&
+            track['album'] != null &&
+            track['album']['images'] != null)
+            .toList();
       } else {
         Get.snackbar('Error', 'Failed to fetch tracks: ${response.statusCode}');
       }
@@ -94,73 +107,6 @@ class SpotifyController extends GetxController {
       Get.snackbar('Error', 'Error fetching tracks: ${e.toString()}');
     } finally {
       isLoading(false);
-    }
-  }
-
-  void togglePlayback() async {
-    if (audioPlayer.playing) {
-      audioPlayer.pause();
-      isPlaying(false);
-    } else {
-      audioPlayer.play();
-      isPlaying(true);
-    }
-  }
-
-  void stopPlayback() {
-    audioPlayer.stop();
-    isPlaying(false);
-    currentTrackProgress.value = 0.0;
-  }
-
-  void previousTrack() {
-    if (currentTrackIndex.value > 0) {
-      currentTrackIndex.value--;
-      _playCurrentTrack();
-    } else {
-      Get.snackbar('Info', 'This is the first track.');
-    }
-  }
-
-  void nextTrack() {
-    if (currentTrackIndex.value < tracks.length - 1) {
-      currentTrackIndex.value++;
-      _playCurrentTrack();
-    } else {
-      Get.snackbar('Info', 'This is the last track.');
-    }
-  }
-
-  void _playCurrentTrack() async {
-    try {
-      final trackUrl = tracks[currentTrackIndex.value]['track']['preview_url'];
-      if (trackUrl != null) {
-        await audioPlayer.setUrl(trackUrl);
-        togglePlayback();
-      } else {
-        Get.snackbar('Error', 'Preview URL is not available for this track.');
-      }
-    } catch (e) {
-      Get.snackbar('Error', 'Error playing track: ${e.toString()}');
-    }
-  }
-
-  void playTrack(int index) async {
-    try {
-      if (index < 0 || index >= tracks.length) {
-        Get.snackbar('Error', 'Invalid track index.');
-        return;
-      }
-      currentTrackIndex.value = index;
-      final trackUrl = tracks[index]['track']['preview_url'];
-      if (trackUrl != null) {
-        await audioPlayer.setUrl(trackUrl);
-        togglePlayback();
-      } else {
-        Get.snackbar('Error', 'Preview URL is not available for this track.');
-      }
-    } catch (e) {
-      Get.snackbar('Error', 'Error playing track: ${e.toString()}');
     }
   }
 
@@ -176,7 +122,9 @@ class SpotifyController extends GetxController {
       );
 
       if (response.statusCode == 200) {
-        tracks.value = jsonDecode(response.body)['playlists']['items'];
+        tracks.value = (jsonDecode(response.body)['playlists']['items'] as List)
+            .map((item) => item as Map<String, dynamic>)
+            .toList();
       } else {
         Get.snackbar('Error', 'Failed to fetch playlists: ${response.statusCode}');
       }
@@ -187,4 +135,64 @@ class SpotifyController extends GetxController {
     }
   }
 
+  void playTrack(int index) async {
+    if (index >= 0 && index < tracks.length) {
+      final track = tracks[index];
+      final url = track['preview_url'];
+
+      // Check if preview_url is available
+      if (url == null || url.isEmpty) {
+        Get.snackbar('Error', 'This track has no preview available.');
+        return;
+      }
+
+      try {
+        // Log the URL for debugging
+        print('Playing track with URL: $url');
+        // Load and play the track
+        currentTrack.value = track;
+        await audioPlayer.setUrl(url);
+        await audioPlayer.play();
+        isPlaying(true);
+      } catch (e) {
+        Get.snackbar('Error', 'Failed to play track: ${e.toString()}');
+        print('Error playing track: $e');
+      }
+    }
+  }
+
+
+  void togglePlayback() async {
+    if (audioPlayer.playing) {
+      await audioPlayer.pause();
+      isPlaying(false);
+    } else {
+      await audioPlayer.play();
+      isPlaying(true);
+    }
+  }
+
+  void stopPlayback() async {
+    await audioPlayer.stop();
+    isPlaying(false);
+    currentTrackProgress.value = 0.0;
+  }
+
+  void previousTrack() {
+    if (currentTrackIndex.value > 0) {
+      currentTrackIndex.value--;
+      playTrack(currentTrackIndex.value);
+    } else {
+      Get.snackbar('Info', 'This is the first track.');
+    }
+  }
+
+  void nextTrack() {
+    if (currentTrackIndex.value < tracks.length - 1) {
+      currentTrackIndex.value++;
+      playTrack(currentTrackIndex.value);
+    } else {
+      Get.snackbar('Info', 'This is the last track.');
+    }
+  }
 }

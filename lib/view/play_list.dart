@@ -68,7 +68,7 @@ class RecommendedPage extends StatelessWidget {
                   final playlist = spotifyController.tracks[index];
                   return GestureDetector(
                     onTap: () {
-                      spotifyController.fetchTracks(playlistId);
+                      spotifyController.fetchTracks();
                       Get.snackbar('Selected', 'Playlist: ${playlist['name']}');
                     },
                     child: Padding(

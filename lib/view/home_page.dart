@@ -24,7 +24,8 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    spotifyController.fetchTracks(playlistId);
+    spotifyController.fetchTracks();
+
     return Scaffold(
       backgroundColor: kBackGroundColor,
       body: SingleChildScrollView(
@@ -33,155 +34,17 @@ class HomePage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Top Section
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    getGreetingMessage(),
-                    style: const TextStyle(
-                        color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  Row(
-                    children: [
-                      IconButton(
-                        icon: const Icon(Icons.notifications, color: Colors.white),
-                        onPressed: () {},
-                      ),
-                      IconButton(
-                        icon: const Icon(Icons.settings, color: Colors.white),
-                        onPressed: () {},
-                      ),
-                    ],
-                  ),
-                ],
-              ),
+              _buildTopSection(),
               const SizedBox(height: 16),
-
-              // Horizontal Grid of Cards
-              Obx(
-                    () => spotifyController.isLoading.value
-                    ? const Center(child: CircularProgressIndicator())
-                    : GridView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 2,
-                    crossAxisSpacing: 8,
-                    mainAxisSpacing: 8,
-                    childAspectRatio: 3,
-                  ),
-                  itemCount: spotifyController.tracks.length,
-                  itemBuilder: (context, index) {
-                    final track = spotifyController.tracks[index]['track'];
-                    return GestureDetector(
-                      onTap: () => spotifyController.playTrack(index),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: Colors.grey[800],
-                          borderRadius: BorderRadius.circular(8),
-                        ),
-                        child: Row(
-                          children: [
-                            Container(
-                              height: 50,
-                              width: 50,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(8),
-                                image: DecorationImage(
-                                  image: NetworkImage(
-                                    track['album']['images'][0]['url'], // Album cover
-                                  ),
-                                  fit: BoxFit.cover,
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                track['name'], // Track name
-                                style: const TextStyle(color: Colors.white),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-
+              _buildTrackGrid(),
               const SizedBox(height: 20),
-
-              // Section: Jump Back In
-              const Text(
-                "Jump Back In",
-                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+              _buildSectionHeader("Jump Back In"),
               const SizedBox(height: 10),
               Obx(() => _buildHorizontalList(spotifyController.tracks)),
-
               const SizedBox(height: 20),
-
-              // Playback Controls
-              Obx(
-                    () => spotifyController.tracks.isNotEmpty
-                    ? Column(
-                  children: [
-                    Text(
-                      "Now Playing: ${spotifyController.currentTrackName} by ${spotifyController.currentTrackArtist}",
-                      style: const TextStyle(color: Colors.white, fontSize: 16),
-                      textAlign: TextAlign.center,
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        IconButton(
-                          icon: const Icon(Icons.skip_previous, color: Colors.white),
-                          onPressed: spotifyController.previousTrack,
-                        ),
-                        IconButton(
-                          icon: Icon(
-                            spotifyController.isPlaying.value
-                                ? Icons.pause_circle_filled
-                                : Icons.play_circle_filled,
-                            color: Colors.white,
-                            size: 40,
-                          ),
-                          onPressed: spotifyController.togglePlayback,
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.skip_next, color: Colors.white),
-                          onPressed: spotifyController.nextTrack,
-                        ),
-                      ],
-                    ),
-                    Obx(
-                          () => Slider(
-                        value: spotifyController.currentTrackProgress.value,
-                        max: spotifyController.currentTrackDuration.value,
-                        onChanged: (value) {
-                          spotifyController.audioPlayer.seek(
-                            Duration(seconds: value.toInt()),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                )
-                    : const SizedBox.shrink(),
-              ),
-
+              _buildPlaybackControls(),
               const SizedBox(height: 20),
-
-              // Section: Your Shows
-              const Text(
-                "Your Shows",
-                style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+              _buildSectionHeader("Your Shows"),
               const SizedBox(height: 10),
               Obx(() => _buildHorizontalList(spotifyController.tracks)),
             ],
@@ -191,39 +54,176 @@ class HomePage extends StatelessWidget {
     );
   }
 
+  Widget _buildTopSection() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          getGreetingMessage(),
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        Row(
+          children: [
+            IconButton(
+              icon: const Icon(Icons.notifications, color: Colors.white),
+              onPressed: () {},
+            ),
+            IconButton(
+              icon: const Icon(Icons.settings, color: Colors.white),
+              onPressed: () {},
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTrackGrid() {
+    return GridView.builder(
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+        crossAxisCount: 2,
+        crossAxisSpacing: 8,
+        mainAxisSpacing: 8,
+        childAspectRatio: 3,
+      ),
+      itemCount: spotifyController.tracks.length,
+      itemBuilder: (context, index) {
+        final track = spotifyController.tracks[index];
+
+        return GestureDetector(
+          onTap: () {
+            if (track['preview_url'] != null) {
+              spotifyController.playTrack(index);
+            } else {
+              Get.snackbar('Unavailable', 'No preview available for this track');
+            }
+          },
+          child: Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: Colors.grey[800],
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Row(
+              children: [
+                _buildTrackImage(track['album']['images'][0]['url']),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    track['name'] ?? 'Unknown',
+                    style: const TextStyle(color: Colors.white),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+
+  Widget _buildPlaybackControls() {
+    return Obx(
+          () => spotifyController.currentTrack.value != null
+          ? Column(
+        children: [
+          Text(
+            "Now Playing: ${spotifyController.currentTrackName} by ${spotifyController.currentTrackArtist}",
+            style: const TextStyle(color: Colors.white, fontSize: 16),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 10),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              IconButton(
+                icon: const Icon(Icons.skip_previous, color: Colors.white),
+                onPressed: spotifyController.previousTrack,
+              ),
+              IconButton(
+                icon: Icon(
+                  spotifyController.isPlaying.value
+                      ? Icons.pause_circle_filled
+                      : Icons.play_circle_filled,
+                  color: Colors.white,
+                  size: 40,
+                ),
+                onPressed: spotifyController.togglePlayback,
+              ),
+              IconButton(
+                icon: const Icon(Icons.skip_next, color: Colors.white),
+                onPressed: spotifyController.nextTrack,
+              ),
+            ],
+          ),
+          Slider(
+            value: spotifyController.currentTrackProgress.value,
+            max: spotifyController.currentTrackDuration.value,
+            onChanged: (value) {
+              spotifyController.currentTrackProgress.value = value;
+              // Seek logic
+            },
+          ),
+        ],
+      )
+          : const Center(
+        child: Text(
+          "No track playing",
+          style: TextStyle(color: Colors.white),
+        ),
+      ),
+    );
+  }
+
+
   Widget _buildHorizontalList(List<dynamic> tracks) {
     return SizedBox(
       height: 150,
       child: tracks.isEmpty
-          ? const Center(child: Text("No tracks available", style: TextStyle(color: Colors.white)))
+          ? const Center(
+        child: Text(
+          "No tracks available",
+          style: TextStyle(color: Colors.white),
+        ),
+      )
           : ListView.builder(
         scrollDirection: Axis.horizontal,
         itemCount: tracks.length,
         itemBuilder: (context, index) {
-          final track = tracks[index]['track'];
+          final track = tracks[index];
+
+          // Validate track data
+          if (track is! Map ||
+              track['album'] == null ||
+              track['album']['images'] == null ||
+              track['album']['images'].isEmpty ||
+              track['name'] == null) {
+            return const SizedBox.shrink(); // Skip invalid tracks
+          }
+
+          final imageUrl = track['album']['images'][0]['url'];
+          final trackName = track['name'];
+
           return Padding(
             padding: const EdgeInsets.only(right: 16.0),
             child: Column(
               children: [
                 GestureDetector(
                   onTap: () => spotifyController.playTrack(index),
-                  child: Container(
-                    height: 100,
-                    width: 100,
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      image: DecorationImage(
-                        image: NetworkImage(
-                          track['album']['images'][0]['url'], // Album cover
-                        ),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
+                  child: _buildTrackImage(imageUrl),
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  track['name'], // Track name
+                  trackName,
                   style: const TextStyle(color: Colors.white, fontSize: 12),
                   textAlign: TextAlign.center,
                   maxLines: 1,
@@ -233,6 +233,33 @@ class HomePage extends StatelessWidget {
             ),
           );
         },
+      ),
+    );
+  }
+
+
+
+  Widget _buildTrackImage(String imageUrl) {
+    return Container(
+      height: 100,
+      width: 100,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(8),
+        image: DecorationImage(
+          image: NetworkImage(imageUrl),
+          fit: BoxFit.cover,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSectionHeader(String title) {
+    return Text(
+      title,
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 18,
+        fontWeight: FontWeight.bold,
       ),
     );
   }

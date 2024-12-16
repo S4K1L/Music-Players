@@ -43,9 +43,9 @@ dependencies:
   flutter_screenutil:
   intl:
   http: ^1.2.2
-  just_audio:
   get:
   google_sign_in:
+  just_audio: ^0.9.36
 
 dev_dependencies:
   flutter_test:

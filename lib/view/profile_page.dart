@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
@@ -11,6 +12,7 @@ class ProfilePage extends StatelessWidget {
   ProfilePage({super.key});
 
   final ProfileController profileController = Get.put(ProfileController());
+  final User? currentUser = FirebaseAuth.instance.currentUser;
 
   @override
   Widget build(BuildContext context) {
@@ -49,7 +51,8 @@ class ProfilePage extends StatelessWidget {
                       top: 130.sp,
                       child: CircleAvatar(
                         radius: 60.sp,
-                        backgroundImage: const AssetImage(logo),
+                        //backgroundImage: const AssetImage(user),
+                        child: Image.asset(user),
                       ),
                     ),
                   ],
@@ -69,14 +72,12 @@ class ProfilePage extends StatelessWidget {
                       child: Column(
                         children: [
                           _buildInfoRow(Icons.email, 'Email', profileController.user.value.email ?? 'Not available'),
-                          const SizedBox(height: 20),
-                          _buildInfoRow(Icons.password, 'Password', profileController.user.value.password ?? 'Not available'),
                         ],
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(height: 20),
+                SizedBox(height: 20*5.sp),
                 Padding(
                   padding: const EdgeInsets.all(8.0),
                   child: Container(
