@@ -24,8 +24,9 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    spotifyController.fetchTracks();
 
+    /// change it when your api works perfectly
+    spotifyController.fetchTrackList(playlistId); // change it when your api works perfectly
     return Scaffold(
       backgroundColor: kBackGroundColor,
       body: SingleChildScrollView(
@@ -66,18 +67,6 @@ class HomePage extends StatelessWidget {
             fontWeight: FontWeight.bold,
           ),
         ),
-        Row(
-          children: [
-            IconButton(
-              icon: const Icon(Icons.notifications, color: Colors.white),
-              onPressed: () {},
-            ),
-            IconButton(
-              icon: const Icon(Icons.settings, color: Colors.white),
-              onPressed: () {},
-            ),
-          ],
-        ),
       ],
     );
   }
@@ -101,7 +90,8 @@ class HomePage extends StatelessWidget {
             if (track['preview_url'] != null) {
               spotifyController.playTrack(index);
             } else {
-              Get.snackbar('Unavailable', 'No preview available for this track');
+              Get.snackbar(
+                  'Unavailable', 'No preview available for this track');
             }
           },
           child: Container(
@@ -122,6 +112,25 @@ class HomePage extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                   ),
                 ),
+                IconButton(
+                  icon: Icon(
+                    spotifyController.isBookmarked(track['id'])
+                        ? Icons.bookmark
+                        : Icons.bookmark_border,
+                    color: spotifyController.isBookmarked(track['id'])
+                        ? Colors.yellow
+                        : Colors.white,
+                  ),
+                  onPressed: () {
+                    spotifyController.toggleBookmark(track['id']);
+                    Get.snackbar(
+                      spotifyController.isBookmarked(track['id'])
+                          ? 'Bookmarked'
+                          : 'Removed',
+                      '${track['name']} has been ${spotifyController.isBookmarked(track['id']) ? 'added to' : 'removed from'} your playlist',
+                    );
+                  },
+                ),
               ],
             ),
           ),
@@ -130,114 +139,142 @@ class HomePage extends StatelessWidget {
     );
   }
 
-
   Widget _buildPlaybackControls() {
     return Obx(
-          () => spotifyController.currentTrack.value != null
+      () => spotifyController.currentTrack.value != null
           ? Column(
-        children: [
-          Text(
-            "Now Playing: ${spotifyController.currentTrackName} by ${spotifyController.currentTrackArtist}",
-            style: const TextStyle(color: Colors.white, fontSize: 16),
-            textAlign: TextAlign.center,
-          ),
-          const SizedBox(height: 10),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              IconButton(
-                icon: const Icon(Icons.skip_previous, color: Colors.white),
-                onPressed: spotifyController.previousTrack,
-              ),
-              IconButton(
-                icon: Icon(
-                  spotifyController.isPlaying.value
-                      ? Icons.pause_circle_filled
-                      : Icons.play_circle_filled,
-                  color: Colors.white,
-                  size: 40,
+              children: [
+                Text(
+                  "Now Playing: ${spotifyController.currentTrackName} by ${spotifyController.currentTrackArtist}",
+                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                  textAlign: TextAlign.center,
                 ),
-                onPressed: spotifyController.togglePlayback,
-              ),
-              IconButton(
-                icon: const Icon(Icons.skip_next, color: Colors.white),
-                onPressed: spotifyController.nextTrack,
-              ),
-            ],
-          ),
-          Slider(
-            value: spotifyController.currentTrackProgress.value,
-            max: spotifyController.currentTrackDuration.value,
-            onChanged: (value) {
-              spotifyController.currentTrackProgress.value = value;
-              // Seek logic
-            },
-          ),
-        ],
-      )
+                const SizedBox(height: 10),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    IconButton(
+                      icon:
+                          const Icon(Icons.skip_previous, color: Colors.white),
+                      onPressed: spotifyController.previousTrack,
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        spotifyController.isPlaying.value
+                            ? Icons.pause_circle_filled
+                            : Icons.play_circle_filled,
+                        color: Colors.white,
+                        size: 40,
+                      ),
+                      onPressed: spotifyController.togglePlayback,
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.skip_next, color: Colors.white),
+                      onPressed: spotifyController.nextTrack,
+                    ),
+                  ],
+                ),
+                Slider(
+                  value: spotifyController.currentTrackProgress.value,
+                  max: spotifyController.currentTrackDuration.value,
+                  onChanged: (value) {
+                    spotifyController.currentTrackProgress.value = value;
+                    // Seek logic
+                  },
+                ),
+              ],
+            )
           : const Center(
-        child: Text(
-          "No track playing",
-          style: TextStyle(color: Colors.white),
-        ),
-      ),
+              child: Text(
+                "No track playing",
+                style: TextStyle(color: Colors.white),
+              ),
+            ),
     );
   }
-
 
   Widget _buildHorizontalList(List<dynamic> tracks) {
     return SizedBox(
       height: 150,
       child: tracks.isEmpty
           ? const Center(
-        child: Text(
-          "No tracks available",
-          style: TextStyle(color: Colors.white),
-        ),
-      )
+              child: Text(
+                "No tracks available",
+                style: TextStyle(color: Colors.white),
+              ),
+            )
           : ListView.builder(
-        scrollDirection: Axis.horizontal,
-        itemCount: tracks.length,
-        itemBuilder: (context, index) {
-          final track = tracks[index];
+              scrollDirection: Axis.horizontal,
+              itemCount: tracks.length,
+              itemBuilder: (context, index) {
+                final track = tracks[index];
 
-          // Validate track data
-          if (track is! Map ||
-              track['album'] == null ||
-              track['album']['images'] == null ||
-              track['album']['images'].isEmpty ||
-              track['name'] == null) {
-            return const SizedBox.shrink(); // Skip invalid tracks
-          }
+                // Validate track data
+                if (track is! Map ||
+                    track['album'] == null ||
+                    track['album']['images'] == null ||
+                    track['album']['images'].isEmpty ||
+                    track['name'] == null ||
+                    track['id'] == null) {
+                  return const SizedBox.shrink(); // Skip invalid tracks
+                }
 
-          final imageUrl = track['album']['images'][0]['url'];
-          final trackName = track['name'];
+                final imageUrl = track['album']['images'][0]['url'];
+                final trackName = track['name'];
+                final trackId = track['id'];
 
-          return Padding(
-            padding: const EdgeInsets.only(right: 16.0),
-            child: Column(
-              children: [
-                GestureDetector(
-                  onTap: () => spotifyController.playTrack(index),
-                  child: _buildTrackImage(imageUrl),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  trackName,
-                  style: const TextStyle(color: Colors.white, fontSize: 12),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
+                return Stack(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(right: 16.0),
+                      child: Column(
+                        children: [
+                          GestureDetector(
+                            onTap: () => spotifyController.playTrack(index),
+                            child: _buildTrackImage(imageUrl),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            trackName,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 12,
+                            ),
+                            textAlign: TextAlign.center,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    Positioned(
+                      right: 10,
+                      child: IconButton(
+                        icon: Icon(
+                          spotifyController.isBookmarked(trackId)
+                              ? Icons.bookmark
+                              : Icons.bookmark_border,
+                          color: spotifyController.isBookmarked(trackId)
+                              ? Colors.yellow
+                              : Colors.white,
+                        ),
+                        onPressed: () {
+                          spotifyController.toggleBookmark(trackId);
+                          Get.snackbar(
+                            spotifyController.isBookmarked(trackId)
+                                ? 'Bookmarked'
+                                : 'Removed',
+                            '$trackName has been ${spotifyController.isBookmarked(trackId) ? 'added to' : 'removed from'} your playlist',
+                          );
+                        },
+                      ),
+                    )
+                  ],
+                );
+              },
             ),
-          );
-        },
-      ),
     );
   }
-
-
 
   Widget _buildTrackImage(String imageUrl) {
     return Container(

@@ -11,9 +11,22 @@ class SpotifyController extends GetxController {
   var currentTrackIndex = 0.obs;
   var currentTrack = Rxn<Map<String, dynamic>>(); // Nullable Map
   var tracks = <Map<String, dynamic>>[].obs;
+  var playList = <Map<String, dynamic>>[].obs;
   var isPlaying = false.obs;
   var currentTrackProgress = 0.0.obs;
   var currentTrackDuration = 0.0.obs;
+
+  var bookmarkedTracks = <String>{}.obs;
+
+  bool isBookmarked(String trackId) => bookmarkedTracks.contains(trackId);
+
+  void toggleBookmark(String trackId) {
+    if (isBookmarked(trackId)) {
+      bookmarkedTracks.remove(trackId);
+    } else {
+      bookmarkedTracks.add(trackId);
+    }
+  }
 
   String get currentTrackName => currentTrack.value?['name'] ?? 'Unknown';
 
@@ -80,7 +93,7 @@ class SpotifyController extends GetxController {
     }
   }
 
-  Future<void> fetchTracks() async {
+  Future<void> fetchPlayList() async {
     try {
       isLoading(true);
       final token = await getAccessToken();
@@ -93,7 +106,7 @@ class SpotifyController extends GetxController {
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
-        tracks.value = (responseData['items'] as List)
+        playList.value = (responseData['items'] as List)
             .map((item) => item['track'] as Map<String, dynamic>)
             .where((track) =>
         track != null &&
@@ -110,30 +123,32 @@ class SpotifyController extends GetxController {
     }
   }
 
-  Future<void> fetchPlaylists() async {
+  Future<void> fetchTrackList(String playlistId) async {
     try {
       isLoading(true);
       final token = await getAccessToken();
       if (token == null) return;
 
+      // Fetch tracks for the specified playlist
       final response = await http.get(
-        Uri.parse('https://api.spotify.com/v1/browse/featured-playlists'),
+        Uri.parse('https://api.spotify.com/v1/playlists/$playlistId/tracks'),
         headers: {'Authorization': 'Bearer $token'},
       );
 
       if (response.statusCode == 200) {
-        tracks.value = (jsonDecode(response.body)['playlists']['items'] as List)
-            .map((item) => item as Map<String, dynamic>)
+        tracks.value = (jsonDecode(response.body)['items'] as List)
+            .map((item) => item['track'] as Map<String, dynamic>)
             .toList();
       } else {
-        Get.snackbar('Error', 'Failed to fetch playlists: ${response.statusCode}');
+        Get.snackbar('Error', 'Failed to fetch tracks: ${response.statusCode}');
       }
     } catch (e) {
-      Get.snackbar('Error', 'Error fetching playlists: ${e.toString()}');
+      Get.snackbar('Error', 'Error fetching tracks: ${e.toString()}');
     } finally {
       isLoading(false);
     }
   }
+
 
   void playTrack(int index) async {
     if (index >= 0 && index < tracks.length) {

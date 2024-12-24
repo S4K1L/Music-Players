@@ -49,7 +49,7 @@ class _BottomBarState extends State<BottomBar> {
                       _buildBottomNavigationItem(CupertinoIcons.home, 0, 'Home'),
                       _buildBottomNavigationItem(
                           Icons.play_circle_outline, 1, 'Music'),
-                      _buildBottomNavigationItem(Icons.bookmark_add_outlined, 2, 'Playlist'),
+                      _buildBottomNavigationItem(Icons.bookmark_add_outlined, 2, 'Bookmark'),
                       _buildBottomNavigationItem(Icons.spoke_outlined, 3, 'Account'),
                     ],
                   ),

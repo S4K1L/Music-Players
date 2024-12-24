@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:music_player/api/api_services.dart';
 import 'package:music_player/controller/spotify_controller.dart';
 import 'package:music_player/utils/constant/colors.dart';
 
@@ -11,130 +10,100 @@ class RecommendedPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Fetch playlists on page load
-    spotifyController.fetchPlaylists();
-
     return Scaffold(
       backgroundColor: kBackGroundColor,
       appBar: AppBar(
         backgroundColor: kBackGroundColor,
         elevation: 0,
         title: const Text(
-          "Playlists",
-          style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.search, color: Colors.white),
-            onPressed: () {},
+          "Bookmarked Songs",
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 24,
+            fontWeight: FontWeight.bold,
           ),
-        ],
+        ),
       ),
       body: Obx(
-            () => spotifyController.isLoading.value
-            ? const Center(
-          child: CircularProgressIndicator(color: Colors.white),
-        )
-            : spotifyController.tracks.isEmpty
-            ? const Center(
-          child: Text(
-            'No playlists found',
-            style: TextStyle(color: Colors.white, fontSize: 16),
-          ),
-        )
-            : Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Tabs Section
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  _buildTab("Playlists", isSelected: true),
-                  _buildTab("Artists"),
-                  _buildTab("Albums"),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
+            () {
+          final bookmarkedTracks = spotifyController.bookmarkedTracks
+              .map((id) => spotifyController.tracks
+              .firstWhereOrNull((track) => track['id'] == id))
+              .where((track) => track != null)
+              .toList();
 
-            // Playlist List
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                itemCount: spotifyController.tracks.length,
-                itemBuilder: (context, index) {
-                  final playlist = spotifyController.tracks[index];
-                  return GestureDetector(
-                    onTap: () {
-                      spotifyController.fetchTracks();
-                      Get.snackbar('Selected', 'Playlist: ${playlist['name']}');
-                    },
-                    child: Padding(
-                      padding: const EdgeInsets.only(bottom: 16.0),
-                      child: Row(
-                        children: [
-                          Container(
-                            height: 60,
-                            width: 60,
-                            decoration: BoxDecoration(
-                              borderRadius: BorderRadius.circular(8),
-                              image: DecorationImage(
-                                image: NetworkImage(
-                                    playlist['images'][0]['url']), // Dynamic image
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 16),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                playlist['name'],
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              Text(
-                                'by ${playlist['owner']['display_name']}',
-                                style: const TextStyle(
-                                  color: Colors.grey,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  );
-                },
+          if (bookmarkedTracks.isEmpty) {
+            return const Center(
+              child: Text(
+                'No bookmarked songs yet!',
+                style: TextStyle(color: Colors.white, fontSize: 16),
               ),
-            ),
-          ],
-        ),
+            );
+          }
+
+          return ListView.builder(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            itemCount: bookmarkedTracks.length,
+            itemBuilder: (context, index) {
+              final track = bookmarkedTracks[index]!;
+              return GestureDetector(
+                onTap: () {
+                  if (track['preview_url'] != null) {
+                    spotifyController.playTrack(index);
+                  } else {
+                    Get.snackbar('Unavailable', 'No preview available for this track');
+                  }
+                },
+                child: Container(
+                  padding: const EdgeInsets.all(8),
+                  margin: const EdgeInsets.only(bottom: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[800],
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Row(
+                    children: [
+                      _buildTrackImage(track['album']['images'][0]['url']),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          track['name'] ?? 'Unknown',
+                          style: const TextStyle(color: Colors.white),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete, color: Colors.red),
+                        onPressed: () {
+                          spotifyController.toggleBookmark(track['id']);
+                          Get.snackbar(
+                            'Removed',
+                            '${track['name']} removed from bookmarks',
+                            snackPosition: SnackPosition.BOTTOM,
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          );
+        },
       ),
     );
   }
 
-  Widget _buildTab(String title, {bool isSelected = false}) {
+  Widget _buildTrackImage(String imageUrl) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+      height: 100,
+      width: 100,
       decoration: BoxDecoration(
-        color: isSelected ? Colors.grey[800] : Colors.transparent,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Text(
-        title,
-        style: TextStyle(
-          color: isSelected ? Colors.white : Colors.grey,
-          fontSize: 14,
-          fontWeight: FontWeight.bold,
+        borderRadius: BorderRadius.circular(8),
+        image: DecorationImage(
+          image: NetworkImage(imageUrl),
+          fit: BoxFit.cover,
         ),
       ),
     );
