@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import 'package:music_player/controller/bookmark_controller.dart';
 import 'package:music_player/controller/spotify_controller.dart';
 import 'package:music_player/utils/constant/colors.dart';
 
-class RecommendedPage extends StatelessWidget {
+class BookMarkedPage extends StatelessWidget {
   final SpotifyController spotifyController = Get.put(SpotifyController());
+  final BookmarkController bookmarkController = Get.put(BookmarkController());
 
-  RecommendedPage({super.key});
+  BookMarkedPage({super.key}) {
+    // Fetch bookmarks for the logged-in user
+    bookmarkController.fetchBookmarksFromFirestore();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -26,7 +31,7 @@ class RecommendedPage extends StatelessWidget {
       ),
       body: Obx(
             () {
-          final bookmarkedTracks = spotifyController.bookmarkedTracks
+          final bookmarkedTracks = bookmarkController.bookmarkedTracks
               .map((id) => spotifyController.tracks
               .firstWhereOrNull((track) => track['id'] == id))
               .where((track) => track != null)
@@ -51,7 +56,8 @@ class RecommendedPage extends StatelessWidget {
                   if (track['preview_url'] != null) {
                     spotifyController.playTrack(index);
                   } else {
-                    Get.snackbar('Unavailable', 'No preview available for this track');
+                    Get.snackbar(
+                        'Unavailable', 'No preview available for this track');
                   }
                 },
                 child: Container(
@@ -76,7 +82,7 @@ class RecommendedPage extends StatelessWidget {
                       IconButton(
                         icon: const Icon(Icons.delete, color: Colors.red),
                         onPressed: () {
-                          spotifyController.toggleBookmark(track['id']);
+                          bookmarkController.toggleBookmark(track['id']);
                           Get.snackbar(
                             'Removed',
                             '${track['name']} removed from bookmarks',

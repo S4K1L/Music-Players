@@ -1,8 +1,10 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
+import 'package:music_player/utils/widgets/mood_selection_page.dart';
 import 'package:music_player/view/home_page.dart';
 import 'package:music_player/view/music_player.dart';
-import 'package:music_player/view/play_list.dart';
+import 'package:music_player/view/book_mark.dart';
 import 'package:music_player/view/profile_page.dart';
 import '../constant/colors.dart';
 
@@ -17,8 +19,8 @@ class _BottomBarState extends State<BottomBar> {
   int indexColor = 0;
   List<Widget> screens = [
     HomePage(),
-    MusicPlayerPage(),
-    RecommendedPage(),
+    MoodSelectionPage(),
+    BookMarkedPage(),
     ProfilePage(),
   ];
 
@@ -30,25 +32,34 @@ class _BottomBarState extends State<BottomBar> {
       },
       child: Scaffold(
         body: screens[indexColor],
+        floatingActionButton: FloatingActionButton(
+          onPressed: () {
+            Navigator.of(context)
+                .push(MaterialPageRoute(builder: (context) => MusicPlayerPage()));
+          },
+          backgroundColor: Colors.green,
+          child: const Icon(Icons.play_arrow_rounded,size: 40,),
+        ),
+        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         bottomNavigationBar: BottomAppBar(
-          elevation: 10,
+          elevation: 10.sp,
           color: kBackGroundColor,
           child: Container(
             width: MediaQuery.of(context).size.width,
             decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(25),
+                borderRadius: BorderRadius.circular(25.sp),
             ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 30),
+                  padding: EdgeInsets.symmetric(horizontal: 30.sp),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       _buildBottomNavigationItem(CupertinoIcons.home, 0, 'Home'),
                       _buildBottomNavigationItem(
-                          Icons.play_circle_outline, 1, 'Music'),
+                          Icons.recommend, 1, 'Recommended'),
                       _buildBottomNavigationItem(Icons.bookmark_add_outlined, 2, 'Bookmark'),
                       _buildBottomNavigationItem(Icons.spoke_outlined, 3, 'Account'),
                     ],
@@ -74,16 +85,16 @@ class _BottomBarState extends State<BottomBar> {
         children: [
           Icon(
             icon,
-            size: 25,
+            size: 25.sp,
             color: indexColor == index ? kBottomBar : kWhiteColor,
           ),
           if (indexColor == index)
             Padding(
-              padding: const EdgeInsets.only(top: 5),
+              padding: EdgeInsets.only(top: 5.sp),
               child: Text(
                 title,
-                style: const TextStyle(
-                    color: kBottomBar, fontSize: 12, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    color: kBottomBar, fontSize: 12.sp, fontWeight: FontWeight.bold),
               ),
             ),
         ],

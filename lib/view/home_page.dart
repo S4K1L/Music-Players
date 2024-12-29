@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:get/get.dart';
 import 'package:music_player/api/api_services.dart';
+import 'package:music_player/controller/bookmark_controller.dart';
 import 'package:music_player/controller/spotify_controller.dart';
 import 'package:music_player/utils/constant/colors.dart';
 
 class HomePage extends StatelessWidget {
   final SpotifyController spotifyController = Get.put(SpotifyController());
+  final BookmarkController bookmarkController = Get.put(BookmarkController());
 
   HomePage({super.key});
 
@@ -31,22 +34,22 @@ class HomePage extends StatelessWidget {
       backgroundColor: kBackGroundColor,
       body: SingleChildScrollView(
         child: Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: EdgeInsets.all(16.0.sp),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildTopSection(),
-              const SizedBox(height: 16),
+              SizedBox(height: 16.sp),
               _buildTrackGrid(),
-              const SizedBox(height: 20),
+              SizedBox(height: 20.sp),
               _buildSectionHeader("Jump Back In"),
-              const SizedBox(height: 10),
+              SizedBox(height: 10.sp),
               Obx(() => _buildHorizontalList(spotifyController.tracks)),
-              const SizedBox(height: 20),
+              SizedBox(height: 20.sp),
               _buildPlaybackControls(),
-              const SizedBox(height: 20),
+              SizedBox(height: 20.sp),
               _buildSectionHeader("Your Shows"),
-              const SizedBox(height: 10),
+              SizedBox(height: 10.sp),
               Obx(() => _buildHorizontalList(spotifyController.tracks)),
             ],
           ),
@@ -61,9 +64,9 @@ class HomePage extends StatelessWidget {
       children: [
         Text(
           getGreetingMessage(),
-          style: const TextStyle(
+          style: TextStyle(
             color: Colors.white,
-            fontSize: 24,
+            fontSize: 24.sp,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -75,11 +78,11 @@ class HomePage extends StatelessWidget {
     return GridView.builder(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        crossAxisSpacing: 8,
-        mainAxisSpacing: 8,
-        childAspectRatio: 3,
+        crossAxisSpacing: 8.sp,
+        mainAxisSpacing: 8.sp,
+        childAspectRatio: 3.sp,
       ),
       itemCount: spotifyController.tracks.length,
       itemBuilder: (context, index) {
@@ -95,15 +98,15 @@ class HomePage extends StatelessWidget {
             }
           },
           child: Container(
-            padding: const EdgeInsets.all(8),
+            padding: EdgeInsets.all(8.sp),
             decoration: BoxDecoration(
               color: Colors.grey[800],
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(8.sp),
             ),
             child: Row(
               children: [
                 _buildTrackImage(track['album']['images'][0]['url']),
-                const SizedBox(width: 8),
+                SizedBox(width: 8.sp),
                 Expanded(
                   child: Text(
                     track['name'] ?? 'Unknown',
@@ -114,20 +117,20 @@ class HomePage extends StatelessWidget {
                 ),
                 IconButton(
                   icon: Icon(
-                    spotifyController.isBookmarked(track['id'])
+                    bookmarkController.isBookmarked(track['id'])
                         ? Icons.bookmark
                         : Icons.bookmark_border,
-                    color: spotifyController.isBookmarked(track['id'])
+                    color: bookmarkController.isBookmarked(track['id'])
                         ? Colors.yellow
                         : Colors.white,
                   ),
                   onPressed: () {
-                    spotifyController.toggleBookmark(track['id']);
+                    bookmarkController.toggleBookmark(track['id']);
                     Get.snackbar(
-                      spotifyController.isBookmarked(track['id'])
+                      bookmarkController.isBookmarked(track['id'])
                           ? 'Bookmarked'
                           : 'Removed',
-                      '${track['name']} has been ${spotifyController.isBookmarked(track['id']) ? 'added to' : 'removed from'} your playlist',
+                      '${track['name']} has been ${bookmarkController.isBookmarked(track['id']) ? 'added to' : 'removed from'} your playlist',
                     );
                   },
                 ),
@@ -146,10 +149,10 @@ class HomePage extends StatelessWidget {
               children: [
                 Text(
                   "Now Playing: ${spotifyController.currentTrackName} by ${spotifyController.currentTrackArtist}",
-                  style: const TextStyle(color: Colors.white, fontSize: 16),
+                  style: TextStyle(color: Colors.white, fontSize: 16.sp),
                   textAlign: TextAlign.center,
                 ),
-                const SizedBox(height: 10),
+                SizedBox(height: 10.sp),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -164,7 +167,7 @@ class HomePage extends StatelessWidget {
                             ? Icons.pause_circle_filled
                             : Icons.play_circle_filled,
                         color: Colors.white,
-                        size: 40,
+                        size: 40.sp,
                       ),
                       onPressed: spotifyController.togglePlayback,
                     ),
@@ -195,7 +198,7 @@ class HomePage extends StatelessWidget {
 
   Widget _buildHorizontalList(List<dynamic> tracks) {
     return SizedBox(
-      height: 150,
+      height: 150.sp,
       child: tracks.isEmpty
           ? const Center(
               child: Text(
@@ -226,19 +229,19 @@ class HomePage extends StatelessWidget {
                 return Stack(
                   children: [
                     Padding(
-                      padding: const EdgeInsets.only(right: 16.0),
+                      padding: EdgeInsets.only(right: 16.0.sp),
                       child: Column(
                         children: [
                           GestureDetector(
                             onTap: () => spotifyController.playTrack(index),
                             child: _buildTrackImage(imageUrl),
                           ),
-                          const SizedBox(height: 8),
+                          SizedBox(height: 8.sp),
                           Text(
                             trackName,
-                            style: const TextStyle(
+                            style: TextStyle(
                               color: Colors.white,
-                              fontSize: 12,
+                              fontSize: 12.sp,
                             ),
                             textAlign: TextAlign.center,
                             maxLines: 1,
@@ -248,23 +251,23 @@ class HomePage extends StatelessWidget {
                       ),
                     ),
                     Positioned(
-                      right: 10,
+                      right: 10.sp,
                       child: IconButton(
                         icon: Icon(
-                          spotifyController.isBookmarked(trackId)
+                          bookmarkController.isBookmarked(trackId)
                               ? Icons.bookmark
                               : Icons.bookmark_border,
-                          color: spotifyController.isBookmarked(trackId)
+                          color: bookmarkController.isBookmarked(trackId)
                               ? Colors.yellow
                               : Colors.white,
                         ),
                         onPressed: () {
-                          spotifyController.toggleBookmark(trackId);
+                          bookmarkController.toggleBookmark(trackId);
                           Get.snackbar(
-                            spotifyController.isBookmarked(trackId)
+                            bookmarkController.isBookmarked(trackId)
                                 ? 'Bookmarked'
                                 : 'Removed',
-                            '$trackName has been ${spotifyController.isBookmarked(trackId) ? 'added to' : 'removed from'} your playlist',
+                            '$trackName has been ${bookmarkController.isBookmarked(trackId) ? 'added to' : 'removed from'} your playlist',
                           );
                         },
                       ),
@@ -278,10 +281,10 @@ class HomePage extends StatelessWidget {
 
   Widget _buildTrackImage(String imageUrl) {
     return Container(
-      height: 100,
-      width: 100,
+      height: 100.sp,
+      width: 100.sp,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(8.sp),
         image: DecorationImage(
           image: NetworkImage(imageUrl),
           fit: BoxFit.cover,
@@ -293,9 +296,9 @@ class HomePage extends StatelessWidget {
   Widget _buildSectionHeader(String title) {
     return Text(
       title,
-      style: const TextStyle(
+      style: TextStyle(
         color: Colors.white,
-        fontSize: 18,
+        fontSize: 18.sp,
         fontWeight: FontWeight.bold,
       ),
     );

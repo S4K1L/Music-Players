@@ -11,6 +11,12 @@ class MusicPlayerPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: kBackGroundColor,
+      appBar: AppBar(
+        backgroundColor: kBackGroundColor,
+        leading: IconButton(onPressed: (){
+          Get.back();
+        }, icon: const Icon(Icons.arrow_back_ios_new,color: kWhiteColor,)),
+      ),
       body: Obx(
             () => spotifyController.isLoading.value
             ? const Center(child: CircularProgressIndicator())

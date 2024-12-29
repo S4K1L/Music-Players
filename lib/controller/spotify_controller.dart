@@ -3,6 +3,13 @@ import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import 'package:just_audio/just_audio.dart';
 import 'package:music_player/api/api_services.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:io' show Platform;
+import 'package:url_launcher/url_launcher.dart';
+import 'dart:io'; // For detecting mobile platforms
+import 'package:flutter/foundation.dart';
+
+import '../utils/web_handle/safe_js.dart'; // For kIsWeb
 
 class SpotifyController extends GetxController {
   final audioPlayer = AudioPlayer();
@@ -15,18 +22,6 @@ class SpotifyController extends GetxController {
   var isPlaying = false.obs;
   var currentTrackProgress = 0.0.obs;
   var currentTrackDuration = 0.0.obs;
-
-  var bookmarkedTracks = <String>{}.obs;
-
-  bool isBookmarked(String trackId) => bookmarkedTracks.contains(trackId);
-
-  void toggleBookmark(String trackId) {
-    if (isBookmarked(trackId)) {
-      bookmarkedTracks.remove(trackId);
-    } else {
-      bookmarkedTracks.add(trackId);
-    }
-  }
 
   String get currentTrackName => currentTrack.value?['name'] ?? 'Unknown';
 
@@ -72,7 +67,8 @@ class SpotifyController extends GetxController {
 
   Future<String?> getAccessToken() async {
     try {
-      final credentials = base64.encode(utf8.encode('$apiClientId:$apiClientSecret'));
+      final credentials =
+          base64.encode(utf8.encode('$apiClientId:$apiClientSecret'));
       final response = await http.post(
         Uri.parse('https://accounts.spotify.com/api/token'),
         headers: {
@@ -109,9 +105,9 @@ class SpotifyController extends GetxController {
         playList.value = (responseData['items'] as List)
             .map((item) => item['track'] as Map<String, dynamic>)
             .where((track) =>
-        track != null &&
-            track['album'] != null &&
-            track['album']['images'] != null)
+                track != null &&
+                track['album'] != null &&
+                track['album']['images'] != null)
             .toList();
       } else {
         Get.snackbar('Error', 'Failed to fetch tracks: ${response.statusCode}');
@@ -149,33 +145,58 @@ class SpotifyController extends GetxController {
     }
   }
 
-
   void playTrack(int index) async {
     if (index >= 0 && index < tracks.length) {
       final track = tracks[index];
-      final url = track['preview_url'];
+      final trackId = track['id'];
 
-      // Check if preview_url is available
-      if (url == null || url.isEmpty) {
-        Get.snackbar('Error', 'This track has no preview available.');
+      if (trackId == null || trackId.isEmpty) {
+        Get.snackbar('Error', 'This track has no valid ID.');
         return;
       }
 
+      // Construct Spotify URL
+      final spotifyUrl = "https://open.spotify.com/track/$trackId";
+
+      // Log the URL
+      print('Spotify URL: $spotifyUrl');
+
       try {
-        // Log the URL for debugging
-        print('Playing track with URL: $url');
-        // Load and play the track
-        currentTrack.value = track;
-        await audioPlayer.setUrl(url);
-        await audioPlayer.play();
-        isPlaying(true);
+        // Use this for all platforms, as it triggers the browser naturally.
+        // It works seamlessly for mobile (iOS/Android) and web.
+        await launchSpotifyUrl(spotifyUrl);
       } catch (e) {
-        Get.snackbar('Error', 'Failed to play track: ${e.toString()}');
-        print('Error playing track: $e');
+        print('Failed to open URL: $e');
+        Get.snackbar('Error', 'Failed to open Spotify URL.');
       }
+    } else {
+      Get.snackbar('Error', 'Invalid track index.');
     }
   }
 
+  Future<void> launchSpotifyUrl(String url) async {
+    try {
+      if (kIsWeb) {
+        // Web environment
+        print("Opening URL in web browser: $url");
+        SafeJs.openUrl(url); // Handle web-specific URL opening
+      } else if (Platform.isAndroid || Platform.isIOS) {
+        // Mobile environment
+        print("Opening URL on mobile: $url");
+        final uri = Uri.parse(url);
+        if (await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        } else {
+          throw Exception("Could not launch URL: $url");
+        }
+      } else {
+        // Unsupported platform
+        print("Unsupported platform for opening URL: $url");
+      }
+    } catch (e) {
+      print("Error opening URL: $e");
+    }
+  }
 
   void togglePlayback() async {
     if (audioPlayer.playing) {
