@@ -9,7 +9,6 @@ import 'dart:io' show Platform;
 import 'package:url_launcher/url_launcher.dart';
 import 'dart:io'; // For detecting mobile platforms
 import 'package:flutter/foundation.dart';
-
 import '../utils/web_handle/safe_js.dart'; // For kIsWeb
 
 class SpotifyController extends GetxController {
@@ -125,7 +124,7 @@ class SpotifyController extends GetxController {
       isLoading(true);
       final token = await getAccessToken();
       if (token == null) {
-        Get.snackbar('Error', 'Failed to retrieve access token');
+        print('Failed to retrieve access token');
         return;
       }
 
@@ -180,22 +179,41 @@ class SpotifyController extends GetxController {
     }
   }
 
-  void playTrack(String trackId) {
-    // Construct Spotify URL
-    final spotifyUrl = "https://open.spotify.com/track/$trackId";
 
-    // Log the URL
-    print('Spotify URL: $spotifyUrl');
+  void playTrack(String trackId) async {
+    if (trackId.isEmpty) {
+      Get.snackbar(
+        'Playback Error',
+        'Track ID is missing.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
+      return;
+    }
+
+    // Construct Spotify URL
+    final spotifyUrl = Uri.parse("https://open.spotify.com/track/$trackId");
 
     try {
-      // Use this for all platforms, as it triggers the browser naturally.
-      // It works seamlessly for mobile (iOS/Android) and web.
-      launchSpotifyUrl(spotifyUrl);
+      // Use launchUrl with options for better compatibility
+      final bool launched = await launchUrl(
+        spotifyUrl,
+        mode: LaunchMode.externalApplication, // Ensures external browser or app
+      );
+
+      if (!launched) {
+        throw 'Could not launch Spotify URL.';
+      }
     } catch (e) {
+      // Log error and show a snackbar
       print('Failed to open URL: $e');
-      Get.snackbar('Error', 'Failed to open Spotify URL.');
+      Get.snackbar(
+        'Error',
+        'Failed to open Spotify URL. Please try again.',
+        snackPosition: SnackPosition.BOTTOM,
+      );
     }
   }
+
 
   Future<void> launchSpotifyUrl(String url) async {
     try {

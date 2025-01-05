@@ -90,12 +90,7 @@ class HomePage extends StatelessWidget {
 
         return GestureDetector(
           onTap: () {
-            if (track['preview_url'] != null) {
-              spotifyController.playTrack(track['id']);
-            } else {
-              Get.snackbar(
-                  'Unavailable', 'No preview available for this track');
-            }
+            spotifyController.playTrack(track['id']);
           },
           child: Container(
             padding: EdgeInsets.all(8.sp),
