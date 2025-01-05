@@ -32,15 +32,6 @@ class _BottomBarState extends State<BottomBar> {
       },
       child: Scaffold(
         body: screens[indexColor],
-        floatingActionButton: FloatingActionButton(
-          onPressed: () {
-            Navigator.of(context)
-                .push(MaterialPageRoute(builder: (context) => MusicPlayerPage()));
-          },
-          backgroundColor: Colors.green,
-          child: const Icon(Icons.play_arrow_rounded,size: 40,),
-        ),
-        floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
         bottomNavigationBar: BottomAppBar(
           elevation: 10.sp,
           color: kBackGroundColor,
